@@ -1,0 +1,69 @@
+# Default values for llm-training
+replicaCount: 1
+
+image:
+  repository: our-registry/llm-training
+  pullPolicy: IfNotPresent
+  tag: 'latest'
+
+imagePullSecrets: []
+nameOverride: ''
+fullnameOverride: ''
+
+podSecurityContext: {}
+
+securityContext: {}
+
+resources:
+  limits:
+    cpu: 16
+    memory: 64Gi
+    nvidia.com/gpu: 4
+  requests:
+    cpu: 8
+    memory: 32Gi
+    nvidia.com/gpu: 4
+
+trainingConfig:
+  modelPath: /data/models
+  datasetPath: /data/datasets
+  outputPath: /data/output
+  trainingArgs:
+    learningRate: 5e-5
+    batchSize: 4
+    epochs: 3
+    gradient_accumulation_steps: 4
+
+persistence:
+  enabled: true
+  storageClass: 'csi-disk-ssd'
+  size: 500Gi
+  mountPath: /data
+
+nodeSelector:
+  accelerator: nvidia
+  use: llm-training
+
+tolerations:
+  - key: 'nvidia.com/gpu'
+    operator: 'Exists'
+    effect: 'NoSchedule'
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: accelerator
+              operator: In
+              values:
+                - nvidia
+
+monitoring:
+  enabled: true
+
+networkPolicy:
+  enabled: true
+  allowFromNamespaces:
+    - monitoring
+    - bastion

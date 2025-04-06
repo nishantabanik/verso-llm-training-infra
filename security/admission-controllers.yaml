@@ -1,0 +1,21 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: pod-security-policy
+webhooks:
+  - name: pod-security.trivy-operator.aquasecurity.github.io
+    rules:
+      - apiGroups: ['']
+        apiVersions: ['v1']
+        operations: ['CREATE', 'UPDATE']
+        resources: ['pods']
+        scope: 'Namespaced'
+    clientConfig:
+      service:
+        namespace: trivy-system
+        name: trivy-operator
+        path: /validate-pods
+    admissionReviewVersions: ['v1', 'v1beta1']
+    sideEffects: None
+    failurePolicy: Ignore
+    timeoutSeconds: 5

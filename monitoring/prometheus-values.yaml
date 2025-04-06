@@ -1,0 +1,93 @@
+prometheus:
+  prometheusSpec:
+    retention: 15d
+    resources:
+      requests:
+        cpu: 1
+        memory: 4Gi
+      limits:
+        cpu: 2
+        memory: 8Gi
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: csi-disk-ssd
+          accessModes: ['ReadWriteOnce']
+          resources:
+            requests:
+              storage: 100Gi
+    serviceMonitorSelector:
+      matchLabels:
+        release: prometheus
+    ruleSelector:
+      matchLabels:
+        release: prometheus
+
+alertmanager:
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: csi-disk-ssd
+          accessModes: ['ReadWriteOnce']
+          resources:
+            requests:
+              storage: 20Gi
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 200m
+        memory: 512Mi
+
+nodeExporter:
+  enabled: true
+
+kubeStateMetrics:
+  enabled: true
+
+grafana:
+  enabled: false # We deploy Grafana separately
+
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 200m
+      memory: 1Gi
+
+  admissionWebhooks:
+    enabled: true
+    patch:
+      enabled: true
+
+defaultRules:
+  create: true
+  rules:
+    etcd: false
+    kubernetesSystem: true
+
+additionalPrometheusRulesMap:
+  gpu-rules:
+    groups:
+      - name: gpu-alerts
+        rules:
+          - alert: GPUHighUtilization
+            expr: DCGM_FI_DEV_GPU_UTIL > 95
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: 'GPU {{$labels.gpu}} on {{$labels.instance}} has high utilization'
+              description: 'GPU utilization on {{$labels.instance}} has been above 95% for more than 10 minutes'
+          - alert: GPUMemoryHighUtilization
+            expr: DCGM_FI_DEV_FB_USED / DCGM_FI_DEV_FB_TOTAL > 0.95
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: 'GPU {{$labels.gpu}} on {{$labels.instance}} has high memory utilization'
+              description: 'GPU memory utilization on {{$labels.instance}} has been above 95% for more than 5 minutes'
