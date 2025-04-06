@@ -1,4 +1,4 @@
-adminPassword: 'changeme' # We need to use .env or KMS (Key Management Service) for password management (better solution).
+adminPassword: 'changeme' # We need to use 1password or KMS for password management. We may choose to remove from here, then Grafana Helm chart will generate a random password and stores it in a Kubernetes Secret, which needs manual retrieval post-deployment.
 
 persistence:
   enabled: true
